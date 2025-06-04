@@ -25,12 +25,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yourusername/telegram-oauth-button.git"
+    "url": "git+https://github.com/thangdevalone/telegram-oauth-button.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/telegram-oauth-button/issues"
+    "url": "https://github.com/thangdevalone/telegram-oauth-button/issues"
   },
-  "homepage": "https://github.com/yourusername/telegram-oauth-button#readme",
+  "homepage": "https://github.com/thangdevalone/telegram-oauth-button#readme",
   "devDependencies": {
     "@types/react": "^18.2.0",
     "typescript": "^5.0.0",
