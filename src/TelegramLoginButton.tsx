@@ -1,7 +1,7 @@
-import React, { useCallback, ReactNode, ElementType, ComponentPropsWithoutRef } from 'react';
+import React, { useCallback, ReactNode, ElementType, ComponentPropsWithoutRef, Children, cloneElement, isValidElement } from 'react';
 import { TelegramOauthLogin, TelegramUser } from './TelegramOauthLogin';
 
-export interface TelegramLoginButtonProps<T extends ElementType = 'button'> {
+export interface TelegramLoginButtonProps {
   /**
    * Bot ID obtained from BotFather
    */
@@ -29,32 +29,32 @@ export interface TelegramLoginButtonProps<T extends ElementType = 'button'> {
   lang?: string;
 
   /**
-   * Custom component to use instead of the default button
-   * @default "button"
+   * If true, will not render a button but instead clone the child element
+   * and pass the onClick handler to it.
+   * @default false
    */
-  as?: T;
+  asChild?: boolean;
   
   /**
    * Additional props to pass to the button component
+   * Only used when asChild is false
    */
-  buttonProps?: ComponentPropsWithoutRef<T>;
+  buttonProps?: React.ButtonHTMLAttributes<HTMLButtonElement>;
 }
 
 /**
  * A React component that renders a button for Telegram OAuth authentication
- * Can be customized with any component using the 'as' prop
+ * Can be customized by passing a child element with asChild=true
  */
-export function TelegramLoginButton<T extends ElementType = 'button'>({
+export function TelegramLoginButton({
   botId,
   onAuth,
   children = 'Log in with Telegram',
   className = '',
-  buttonProps = {} as ComponentPropsWithoutRef<T>,
+  buttonProps = {},
   lang,
-  as,
-}: TelegramLoginButtonProps<T>) {
-  const Component: ElementType = as || 'button';
-  
+  asChild = false,
+}: TelegramLoginButtonProps) {
   const handleLogin = useCallback(() => {
     const telegramLogin = new TelegramOauthLogin({
       botId,
@@ -68,15 +68,37 @@ export function TelegramLoginButton<T extends ElementType = 'button'>({
     telegramLogin.auth();
   }, [botId, onAuth, lang]);
 
-  return React.createElement(
-    Component,
-    {
-      onClick: handleLogin,
-      className,
-      ...(Component === 'button' ? { type: 'button' } : {}),
-      ...buttonProps
-    },
-    children
+  // If asChild is true, clone the child element and pass the onClick handler
+  if (asChild) {
+    const child = Children.only(children);
+    
+    if (isValidElement(child)) {
+      return cloneElement(child, {
+        // Type assertion to handle any type of element
+        onClick: (e: React.MouseEvent) => {
+          // Call the original onClick if it exists
+          if (typeof child.props.onClick === 'function') {
+            child.props.onClick(e);
+          }
+          handleLogin();
+        }
+      } as React.HTMLAttributes<HTMLElement>);
+    }
+    
+    console.warn('TelegramLoginButton: asChild is true but no valid child element was provided');
+    return null;
+  }
+
+  // Default rendering as a button
+  return (
+    <button 
+      type="button"
+      onClick={handleLogin}
+      className={className}
+      {...buttonProps}
+    >
+      {children}
+    </button>
   );
 }
 

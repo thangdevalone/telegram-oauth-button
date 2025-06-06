@@ -8,6 +8,13 @@ A TypeScript library for implementing Telegram Login authentication in web appli
 npm install telegram-oauth-button
 ```
 
+## Features
+
+- TypeScript support with full type definitions
+- React component for easy integration
+- Customizable button with `asChild` pattern
+- Support for server-side validation
+
 ## Usage
 
 ### Basic Implementation
@@ -41,69 +48,78 @@ document.getElementById('telegram-login-button')?.addEventListener('click', () =
 });
 ```
 
-### React Component Example
+### React Component
+
+The library provides a React component that simplifies integration:
 
 ```tsx
 import React from 'react';
-import { TelegramLoginButton } from 'telegram-oauth-button';
+import { TelegramLoginButton, TelegramUser } from 'telegram-oauth-button';
 
-function MyLoginComponent() {
-  const handleAuth = (user) => {
+const MyLoginComponent: React.FC = () => {
+  const handleAuth = (user: TelegramUser) => {
     console.log('User authenticated:', user);
+    // Process user data
   };
 
   return (
     <TelegramLoginButton 
       botId="YOUR_BOT_ID"
       onAuth={handleAuth}
+      className="telegram-login-btn"
     >
       Log in with Telegram
     </TelegramLoginButton>
   );
-}
+};
+
+export default MyLoginComponent;
 ```
 
-### Custom Button Component
+### Customizing with `asChild` Pattern
 
-You can use any component as the button by using the `as` prop:
+The `asChild` pattern allows you to use your own custom button or component while still receiving the Telegram authentication functionality:
 
 ```tsx
 import React from 'react';
-import { TelegramLoginButton } from 'telegram-oauth-button';
+import { TelegramLoginButton, TelegramUser } from 'telegram-oauth-button';
 import { Button } from '@your-ui-library/components';
 
-function CustomButtonExample() {
-  const handleAuth = (user) => {
+const CustomButtonExample: React.FC = () => {
+  const handleAuth = (user: TelegramUser) => {
     console.log('User authenticated:', user);
   };
 
-  // Using a custom button component
   return (
     <TelegramLoginButton 
       botId="YOUR_BOT_ID"
       onAuth={handleAuth}
-      as={Button}
-      buttonProps={{ 
-        variant: 'primary',
-        size: 'large',
-        startIcon: <TelegramIcon />
-      }}
+      asChild
     >
-      Sign in with Telegram
+      <Button 
+        variant="primary" 
+        size="large"
+        startIcon={<TelegramIcon />}
+        className="custom-telegram-btn"
+      >
+        Sign in with Telegram
+      </Button>
     </TelegramLoginButton>
   );
-}
+};
 ```
+
+The `asChild` prop tells the component to pass the authentication handler to the child component instead of wrapping it. This gives you full control over the UI while retaining the authentication functionality.
 
 ### Using with Next.js Link
 
 ```tsx
 import React from 'react';
 import Link from 'next/link';
-import { TelegramLoginButton } from 'telegram-oauth-button';
+import { TelegramLoginButton, TelegramUser } from 'telegram-oauth-button';
 
-function NextLinkExample() {
-  const handleAuth = (user) => {
+const NextLinkExample: React.FC = () => {
+  const handleAuth = (user: TelegramUser) => {
     console.log('User authenticated:', user);
   };
 
@@ -111,21 +127,67 @@ function NextLinkExample() {
     <TelegramLoginButton 
       botId="YOUR_BOT_ID"
       onAuth={handleAuth}
-      as={Link}
-      buttonProps={{ 
-        href: '#',
-        style: { display: 'inline-block', padding: '10px 20px' }
-      }}
+      asChild
     >
-      Connect with Telegram
+      <Link 
+        href="#"
+        className="telegram-link"
+        style={{ display: 'inline-block', padding: '10px 20px' }}
+      >
+        Connect with Telegram
+      </Link>
     </TelegramLoginButton>
   );
+};
+```
+
+## API Reference
+
+### TelegramOauthLogin
+
+```typescript
+new TelegramOauthLogin({
+  botId: string;
+  params: {
+    lang?: string;
+    origin: string;
+  };
+  callback: (data: TelegramUser) => Promise<void> | void;
+})
+```
+
+#### Methods
+
+- `auth()`: Opens the Telegram OAuth popup
+
+### TelegramLoginButton Props
+
+```typescript
+interface TelegramLoginButtonProps {
+  // Bot ID obtained from BotFather
+  botId: string;
+  
+  // Callback function called with user data after successful authentication
+  onAuth: (user: TelegramUser) => void;
+  
+  // Button text or children elements
+  children?: ReactNode;
+  
+  // CSS class name for styling the button
+  className?: string;
+  
+  // Language code for the Telegram login widget
+  lang?: string;
+
+  // If true, passes onClick handler to child element instead of wrapping
+  asChild?: boolean;
+  
+  // Additional props for the button (only used when asChild is false)
+  buttonProps?: React.ButtonHTMLAttributes<HTMLButtonElement>;
 }
 ```
 
-## User Data
-
-The `TelegramUser` object contains the following properties:
+### TelegramUser Type
 
 ```typescript
 interface TelegramUser {
@@ -145,10 +207,21 @@ For security reasons, you should validate the authentication data on your server
 
 ### Server-side Validation Example (Node.js)
 
-```javascript
-const crypto = require('crypto');
+```typescript
+import crypto from 'crypto';
 
-function validateTelegramAuth(telegramUser, botToken) {
+interface TelegramUser {
+  id: number;
+  first_name: string;
+  last_name: string;
+  username: string;
+  photo_url: string;
+  auth_date: number;
+  hash: string;
+  [key: string]: any;
+}
+
+function validateTelegramAuth(telegramUser: TelegramUser, botToken: string): boolean {
   const { hash, ...userData } = telegramUser;
   
   // Sort keys alphabetically
